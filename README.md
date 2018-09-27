@@ -1,2 +1,2 @@
 # CA
-The following repository contain personal solutions for assignement in DTU Course Computer Architechture
+This repository contains personal solutions for assignment in DTU Course Computer Architecture
