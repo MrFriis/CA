@@ -1,4 +1,4 @@
-##### Exercise 2.34 in text book
+# Exercise 2.34 in text book
 # Created by Martin Skovsboel Friis
 # Date: 27-09-18
 
