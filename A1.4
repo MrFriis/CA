@@ -12,87 +12,83 @@ lw a0, aa
 lw a1, bb
 lw a2, cc
 lw a3, dd
-jal complexMul # Multiply z and w
+jal complexMul 		# Multiply z and w
 nop
-j end          # Jump to end of program
+j end          		# Jump to end of program
 nop
 
 complexMul:
-addi sp, sp, -28 #Adjust stack to fit variables
-	sw a0, -24(sp) #Re part of z on stack
-	sw a1, -20(sp) #Im part of z on stack
-	sw a2, -16(sp) #Re part of w on stack
-	sw a3, -12(sp) #Im part of w on stack
-	sw x1, -8(sp) #Address of link in stack
+    addi sp, sp, -28 	# Adjust stack to fit variables
+    sw a0, -24(sp) 	# Re part of z on stack
+    sw a1, -20(sp) 	# Im part of z on stack
+    sw a2, -16(sp) 	# Re part of w on stack
+    sw a3, -12(sp) 	# Im part of w on stack
+    sw x1, -8(sp) 	# Address of link in stack
 	
-	#Compute the real part of the result
-	add a1, zero, a2 #Correct parameter for mul procedure
-	jal x1, myMult #Give control to multiplication procedure
-	sw a0, -4(sp) #Save immediate real product on stack
-	lw a0, -20(sp) #Load re(z)
-	lw a1, -12(sp) #Load Im(w)
-	jal x1, myMult #Give control to multiplication procedure
-	lw t0, -4(sp) #Load real immediate
-	neg a0, a0 #Negate for subtraction
-	add t0, t0, a0 #Compute real product
-	sw t0, -4(sp) #Save real product on stack
+    #Compute the real part of the result
+    add a1, zero, a2 	# Correct parameter for mul procedure
+    jal x1, myMult 	# Give control to multiplication procedure
+    sw a0, -4(sp) 	# Save immediate real product on stack
+    lw a0, -20(sp) 	# Load re(z)
+    lw a1, -12(sp) 	# Load Im(w)
+    jal x1, myMult 	# Give control to multiplication procedure
+    lw t0, -4(sp) 	# Load real immediate
+    neg a0, a0 		# Negate for subtraction
+    add t0, t0, a0 	# Compute real product
+    sw t0, -4(sp) 	# Save real product on stack
 	
-	#Compute imaginary part of result
-	lw a0, -24(sp) #Load re(z)
-	lw a1, -12(sp) #Load im(w)
-	jal x1, myMult #Compute product
-	sw a0, 0(sp) #Save immediate complex prod on stack
-	lw a0,-20(sp) #Load Im(z)
-	lw a1, -16(sp) #Load Re(w)
-	jal x1, myMult
-	lw t0, 0(sp) #Load immediate complex prod
-	add t0, t0, a0 #Compute final complex prod
+    #Compute imaginary part of result
+    lw a0, -24(sp) 	# Load re(z)
+    lw a1, -12(sp) 	# Load im(w)
+    jal x1, myMult 	# Compute product
+    sw a0, 0(sp) 	# Save immediate complex prod on stack
+    lw a0,-20(sp) 	# Load Im(z)
+    lw a1, -16(sp) 	# Load Re(w)
+    jal x1, myMult
+    lw t0, 0(sp) 	# Load immediate complex prod
+    add t0, t0, a0 	# Compute final complex prod
 	
-	#Setup return variables
-	lw a0, -4(sp) #Real part 
-	add a1, zero, t0 #Complex part
+    #Setup return variables
+    lw a0, -4(sp) 	# Real part 
+    add a1, zero, t0 	# Complex part
 	
-	lw x1, -8(sp) #Fix return address 
+    lw x1, -8(sp) 	# Fix return address 
 	
-	#Adjust stack
-	addi sp, sp, 28 #Remove trace
-	jalr x0, 0(x1)
-
-#myMul:
-#mul a0, a0, a1
-#	jalr x0, 0(x1)
+    #Adjust stack
+    addi sp, sp, 28 	# Remove trace
+    jalr x0, 0(x1)
 
 myMult:
-	#Logic conditionals
-    li t0, 0x80000000 #t0 = AND CONSTANT FOR MSB
-    and t1, a0, t0 #t1 = MSB-multiplier
-    and t2, a1, t0 #t2 = MSB-multiplicand
-    bne t1, t0, L1
+    #Logic conditionals
+    li t0, 0x80000000 	# t0 = AND CONSTANT FOR MSB
+    and t1, a0, t0 	# t1 = MSB-multiplier
+    and t2, a1, t0 	# t2 = MSB-multiplicand
+    bne t1, t0, L1	# If the multiplier is a negative number, we need to negate to positive, otherwise skip
     neg a0, a0
-    L1: bne t2, t0, L2
+    L1: bne t2, t0, L2	# If the multiplicand is a negative number, we need to negate to positive, otherwise skip
     neg a1, a1
     L2: 
-    li t3, 0 #t3 = immediate product register
-    li t4, 0 #t4 = loop counter
-    li t5, 0x01 #t5 = Branch constant for LSB
-    li t6, 31 #t6 = Loop MAX iteration for signed int mult.
+    li t3, 0 		# t3 = immediate product register
+    li t4, 0 		# t4 = loop counter
+    li t5, 0x01 	# t5 = Branch constant for LSB
+    li t6, 31 		# t6 = Loop MAX iteration for signed int mult.
     loop:
- 	andi s0, a0, 0x01 #s1 = LSB of mul
+    andi s0, a0, 0x01 	# s1 = LSB of mul
     bne s0, t5, shiftop
-    add t3, t3, a1 #product = product+multiplicand
- shiftop:
- 	slli a1, a1, 1
-    srli a0, a0, 1
-    addi t4, t4, 1 #Count++
-    bne t4, t6, loop #
+    add t3, t3, a1 	# product = product + multiplicand
+    shiftop:
+ 	slli a1, a1, 1 	# Shift left multiplicand
+    srli a0, a0, 1 	# Shift right multiplier
+    addi t4, t4, 1 	# Count++
+    bne t4, t6, loop 	# Keeps running until 31 bits reached (MSB sign bit)
     
     #Negative product if original signs disagree
-    xor t4, t1, t2 #t4 = sign difference
-    bne t4, t0, return
+    xor t4, t1, t2 	# t4 = sign difference
+    bne t4, t0, return	# If value should be positive, no negate is needed
     neg t3, t3
-    return:
-    add a0, zero, t3 #Set return parameter
-    jalr x0, 0(x1) #Release control
+return:
+    add a0, zero, t3	# Set return parameter
+    jalr x0, 0(x1) 	# Release control
 
 
 end:
