@@ -1,0 +1,55 @@
+.data
+multiplier: .word 10
+multiplicand: .word -10
+
+.text
+main:
+	lw a0, multiplier
+	lw a1, multiplicand
+    jal x1, myMultSigned
+    add a1, zero, a0
+    addi a0, zero, 1
+    ecall
+    addi a0, zero, 10
+    ecall
+    
+    
+myMultSigned:
+	#Logic conditionals
+    li t0, 0x80000000 #t0 = AND CONSTANT FOR MSB
+    and t1, a0, t0 #t1 = MSB-multiplier
+    and t2, a1, t0 #t2 = MSB-multiplicand
+    bne t1, t0, L1
+    neg a0, a0
+    L1: bne t2, t0, L2
+    neg a1, a1
+    L2: 
+    li t3, 0 #t3 = immediate product register
+    li t4, 0 #t4 = loop counter
+    li t5, 0x01 #t5 = Branch constant for LSB
+    li t6, 31 #t6 = Loop MAX iteration for signed int mult.
+    loop:
+ 	andi s0, a0, 0x01 #s1 = LSB of mul
+    bne s0, t5, shiftop
+    add t3, t3, a1 #product = product+multiplicand
+ shiftop:
+ 	slli a1, a1, 1
+    srli a0, a0, 1
+    addi t4, t4, 1 #Count++
+    bne t4, t6, loop #
+    
+    #Negative product if original signs disagree
+    xor t4, t1, t2 #t4 = sign difference
+    bne t4, t0, return
+    neg t3, t3
+    return:
+    add a0, zero, t3 #Set return parameter
+    jalr x0, 0(x1) #Release control
+    
+    
+    
+	
+    
+    
+    
+    
